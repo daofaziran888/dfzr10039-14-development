@@ -86,6 +86,9 @@
       </form>
     </div>
 
+    <TrialPanel v-if="meta.key === 'content_extract'" @run-selected="handleRunSelected" />
+    <AcceptancePanel v-if="meta.key === 'field_clean'" />
+
     <footer class="page-foot">
       <span>共 {{ total }} 条{{ meta.name }}记录</span>
       <span v-if="errorMessage" class="error-text">{{ errorMessage }}</span>
@@ -104,6 +107,9 @@ import {
   runAction as applyAction,
 } from '@/api/backend-service'
 import type { EntryRow } from '@/data/types'
+import AcceptancePanel from '@/views/trial/AcceptancePanel.vue'
+import TrialPanel from '@/views/trial/TrialPanel.vue'
+import { selectedRunId } from '@/views/trial/shared'
 
 const props = defineProps<{ moduleKey: string }>()
 const meta = moduleMeta(props.moduleKey)
@@ -174,6 +180,11 @@ async function runAction(action: string, row: EntryRow) {
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '操作失败'
   }
+}
+
+function handleRunSelected(runId: string) {
+  // 试跑结果与清洗验收共用同一个批次选择，切到字段清洗时直接接着看。
+  selectedRunId.value = runId
 }
 
 async function reload() {

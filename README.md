@@ -83,3 +83,27 @@ npm run dev
 
 领域：数据工程
 子方向：数据采集、爬虫与RPA
+
+## 内容抽取试跑与字段清洗验收
+
+内容抽取模块带一个批量试跑面板（`/content_extract`），字段清洗模块带验收面板
+（`/field_clean`），用于“正式启用前先试跑”。
+
+- `POST /api/trial/runs`：一次提交同组样本，对多条候选规则 × 多个本地网页快照
+  逐页生成试样；每份试样保留候选规则快照、适用页面组、页面版本、原值、
+  转换值和转换问题。
+- `GET /api/trial/runs/{run_id}/report`：试样报告，按网页 / 页面组分组回查。
+- `GET /api/trial/runs/{run_id}/cleaning-manifest`：把试跑结果同步成字段清洗
+  清单，列出每页每个字段的原值、转换值、值类型和问题；正式清洗规则只读展示。
+- `POST /api/trial/runs/{run_id}/acceptances`：清洗端发起验收。返回本次实际
+  领到的试样、可以交发布验收的测试条目、暂缓试样及原因、页面组资格和同批
+  口径冲突；只有能回查候选规则与适用页面组且无转换问题的试样才会被签为通过。
+- `POST /api/trial/runs/{run_id}/retry`：批量试跑中断后重试，只替换本次未确认
+  的试样，已签来源保留；被替换的旧试样留在历史里。
+- `PUT /api/trial/snapshots/{page_id}`：更正本地网页快照，版本号递增。
+- `GET /api/trial/runs/{run_id}/history`：回查历次验收结果、暂缓原因和试样替换记录。
+- `POST /api/trial/scenario`：重放题面示例（坏日期更正前确认 → 更正 → 重试 → 再确认）。
+
+试跑和清洗抽验只写 `app/trial_engine.py` 里的内存登记表，不写内容抽取、字段清洗、
+批次存储等正式数据；`/api/trial/state` 会给出正式数据的指纹比对结果。
+仓库自带的候选 P / Q、新闻页快照和栏目坏日期 / 正常日期页可以直接复现整条流程。
